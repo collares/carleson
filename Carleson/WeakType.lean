@@ -1,8 +1,11 @@
+import Mathlib.MeasureTheory.Integral.IntegralEqImproper
+import Mathlib.MeasureTheory.Integral.FundThmCalculus
 import Mathlib.MeasureTheory.Integral.MeanInequalities
 import Mathlib.MeasureTheory.Integral.Layercake
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.Analysis.NormedSpace.Dual
 import Mathlib.Analysis.NormedSpace.LinearIsometry
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 noncomputable section
 
@@ -66,14 +69,34 @@ lemma _root_.ContinuousLinearMap.distribution_le {f : α → E₁} {g : α → E
 
 
 /- A version of the layer-cake theorem already exists, but the need the versions below. -/
--- #check MeasureTheory.lintegral_comp_eq_lintegral_meas_lt_mul
+-- #check MeasureTheory.lintegral_comp_eq_lintegral_meas_le_mul
 
 /-- The layer-cake theorem, or Cavalieri's principle for functions into `ℝ≥0∞` -/
 lemma lintegral_norm_pow_eq_measure_lt {f : α → ℝ≥0∞} (hf : AEMeasurable f μ)
     {p : ℝ} (hp : 1 ≤ p) :
     ∫⁻ x, (f x) ^ p ∂μ =
-    ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (p * t ^ (p - 1)) * μ { x | ENNReal.ofReal t < f x } := by
-  sorry
+    ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (p * t ^ (p - 1)) * μ { x | ENNReal.ofReal t ≤ f x } := by
+  by_cases hinf : μ { x | f x = ∞ } > 0
+  · sorry
+
+  -- Otherwise, may replace by which is measurable, equals f ae, is ≥0 everywhere and is real-valued
+  lift f to (α → ℝ≥0)
+  · sorry
+  let f : α → ℝ := fun x => f x
+
+  have hf' : AEMeasurable f μ := by sorry
+  let g := fun x ↦ p * x ^ (p - 1)
+  have g_intble : ∀ t > 0, IntervalIntegrable g volume 0 t := by sorry
+  have f_nn : 0 ≤ᵐ[μ] f := by sorry
+  have g_nn : ∀ᵐ t ∂volume.restrict (Ioi 0), 0 ≤ g t := by sorry
+
+  convert MeasureTheory.lintegral_comp_eq_lintegral_meas_le_mul μ f_nn hf' g_intble g_nn using 1
+  · -- have a1 := fun x => (Real.hasDerivAt_rpow_const (Or.inr hp))
+    -- intervalIntegral.integral_deriv_eq_sub is the fundamental theorem of calculus
+    sorry
+  · simp [g, f, mul_comm]
+    sorry
+
 
 /-- The layer-cake theorem, or Cavalieri's principle for functions into a normed group. -/
 lemma lintegral_norm_pow_eq_distribution {p : ℝ} (hp : 1 ≤ p) :
